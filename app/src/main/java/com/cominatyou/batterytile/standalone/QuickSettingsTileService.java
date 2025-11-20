@@ -25,8 +25,7 @@ public class QuickSettingsTileService extends TileService {
         if (getSharedPreferences("preferences", Context.MODE_PRIVATE).getBoolean("infoInTitle", false)) {
             getQsTile().setLabel(text);
             getQsTile().setSubtitle(getString(R.string.battery_tile_label));
-        }
-        else {
+        } else {
             getQsTile().setSubtitle(text);
         }
     }
@@ -35,6 +34,9 @@ public class QuickSettingsTileService extends TileService {
         final int batteryLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
         final int plugState = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
         final int batteryState = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+
+        // MODIFICATION: Get temperature (tenths of degree) and convert to whole number
+        final int temperature = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) / 10;
 
         final boolean isPluggedIn = plugState == BatteryManager.BATTERY_PLUGGED_AC || plugState == BatteryManager.BATTERY_PLUGGED_USB || plugState == BatteryManager.BATTERY_PLUGGED_WIRELESS;
         final boolean isFullyCharged = isPluggedIn && batteryState == BatteryManager.BATTERY_STATUS_FULL;
@@ -45,10 +47,10 @@ public class QuickSettingsTileService extends TileService {
         }
 
         if (getSharedPreferences("preferences", MODE_PRIVATE).getBoolean("percentage_as_icon", false)) {
-            @SuppressLint("DiscouragedApi") final int iconId = getResources().getIdentifier("ic_tile_percent_" + batteryLevel, "drawable", getPackageName());
+            // MODIFICATION: Use 'temperature' instead of 'batteryLevel'
+            @SuppressLint("DiscouragedApi") final int iconId = getResources().getIdentifier("ic_tile_percent_" + temperature, "drawable", getPackageName());
             getQsTile().setIcon(Icon.createWithResource(this, iconId == 0 ? R.drawable.ic_qs_battery : iconId));
-        }
-        else if (isPluggedIn && getSharedPreferences("preferences", MODE_PRIVATE).getBoolean("dynamic_tile_icon", true)) {
+        } else if (isPluggedIn && getSharedPreferences("preferences", MODE_PRIVATE).getBoolean("dynamic_tile_icon", true)) {
             switch (plugState) {
                 case BatteryManager.BATTERY_PLUGGED_AC -> getQsTile().setIcon(Icon.createWithResource(this, R.drawable.ic_power));
                 case BatteryManager.BATTERY_PLUGGED_USB -> getQsTile().setIcon(Icon.createWithResource(this, R.drawable.ic_usb));
@@ -61,49 +63,43 @@ public class QuickSettingsTileService extends TileService {
             final String customTileText = getSharedPreferences("preferences", MODE_PRIVATE).getString("charging_text", "");
             setActiveLabelText(customTileText.isEmpty() ? getString(R.string.fully_charged) : new TileTextFormatter(this).format(customTileText));
             if (!isTappableTileEnabled) getQsTile().setState(getTileState(true));
-        }
-        else if (isCharging) {
+        } else if (isCharging) {
             final String customTileText = getSharedPreferences("preferences", MODE_PRIVATE).getString("charging_text", "");
             if (!isTappableTileEnabled) getQsTile().setState(getTileState(true));
 
             if (!customTileText.isEmpty()) {
                 setActiveLabelText(new TileTextFormatter(this).format(customTileText));
-            }
-            else {
+            } else {
                 final long remainingTime = getSystemService(BatteryManager.class).computeChargeTimeRemaining();
 
                 // computeChargeTimeRemaining() returns 0 at times for some reason, so check for < 1, not -1
                 if (remainingTime < 1) {
                     setActiveLabelText(getString(R.string.charging_no_time_estimate, batteryLevel));
-                }
-                else if (remainingTime <= 60000) {
+                } else if (remainingTime <= 60000) {
                     // case for when less than 1m is remaining - duration returns 0 minutes if less than 1m which is undesirable
                     setActiveLabelText(getString(R.string.charging_less_than_one_hour_left, batteryLevel, 1));
-                }
-                else {
+                } else {
                     Duration duration = Duration.ofMillis(remainingTime);
                     final long hours = duration.toHours();
                     final long minutes = duration.minusHours(hours).toMinutes();
 
                     if (hours > 0) {
                         setActiveLabelText(getString(R.string.charging_more_than_one_hour_left, batteryLevel, hours, minutes));
-                    }
-                    else {
+                    } else {
                         setActiveLabelText(getString(R.string.charging_less_than_one_hour_left, batteryLevel, minutes));
                     }
                 }
             }
-        }
-        else {
+        } else {
             final String customTileText = getSharedPreferences("preferences", MODE_PRIVATE).getString("discharging_text", "");
             setActiveLabelText(customTileText.isEmpty() ? batteryLevel + "%" : new TileTextFormatter(this).format(customTileText));
             if (!isTappableTileEnabled) getQsTile().setState(getTileState(false));
 
             if (getSharedPreferences("preferences", MODE_PRIVATE).getBoolean("percentage_as_icon", false)) {
-                @SuppressLint("DiscouragedApi") final int iconId = getResources().getIdentifier("ic_tile_percent_" + batteryLevel, "drawable", getPackageName());
+                // MODIFICATION: Use 'temperature' instead of 'batteryLevel'
+                @SuppressLint("DiscouragedApi") final int iconId = getResources().getIdentifier("ic_tile_percent_" + temperature, "drawable", getPackageName());
                 getQsTile().setIcon(Icon.createWithResource(this, iconId == 0 ? R.drawable.ic_qs_battery : iconId));
-            }
-            else {
+            } else {
                 getQsTile().setIcon(Icon.createWithResource(this, R.drawable.ic_qs_battery));
             }
         }
@@ -116,11 +112,12 @@ public class QuickSettingsTileService extends TileService {
 
         if (getSystemService(PowerManager.class).isPowerSaveMode()) {
             getQsTile().setState(Tile.STATE_ACTIVE);
-            if (shouldEmulatePowerSaveTile) getQsTile().setSubtitle(getString(R.string.power_saver_tile_on_subtitle));
-        }
-        else {
+            if (shouldEmulatePowerSaveTile)
+                getQsTile().setSubtitle(getString(R.string.power_saver_tile_on_subtitle));
+        } else {
             getQsTile().setState(Tile.STATE_INACTIVE);
-            if (shouldEmulatePowerSaveTile) getQsTile().setSubtitle(getString(R.string.power_saver_tile_off_subtitle));
+            if (shouldEmulatePowerSaveTile)
+                getQsTile().setSubtitle(getString(R.string.power_saver_tile_off_subtitle));
         }
 
         getQsTile().updateTile();
@@ -161,19 +158,16 @@ public class QuickSettingsTileService extends TileService {
                 getQsTile().setState(Tile.STATE_UNAVAILABLE);
                 getQsTile().setSubtitle(getString(R.string.power_save_tile_unavailable_subtitle));
                 getQsTile().updateTile();
-            }
-            else {
+            } else {
                 setPowerSaveInfo();
             }
-        }
-        else {
+        } else {
             getQsTile().setIcon(Icon.createWithResource(this, R.drawable.ic_qs_battery));
             getQsTile().setLabel(getString(R.string.battery_tile_label));
 
             if (!isTappableTileEnabled) {
                 getQsTile().setState(getTileState(isCharging));
-            }
-            else {
+            } else {
                 final IntentFilter powerSaveChangedFilter = new IntentFilter(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED);
                 registerReceiver(powerSaveModeReceiver, powerSaveChangedFilter);
                 setPowerSaveInfo();
