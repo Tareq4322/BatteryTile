@@ -49,7 +49,7 @@ public class QuickSettingsTileService extends TileService {
 
     /**
      * Draws text onto the icon.
-     * Back to single-line logic so it's actually readable.
+     * Uses Condensed font to maximize size.
      */
     private Icon createDynamicIcon(String text) {
         Bitmap bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
@@ -57,13 +57,18 @@ public class QuickSettingsTileService extends TileService {
         Paint paint = new Paint();
         paint.setColor(Color.WHITE);
         paint.setAntiAlias(true);
-        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        
+        // USE CONDENSED FONT: Allows taller text that fits in the same width
+        paint.setTypeface(Typeface.create("sans-serif-condensed", Typeface.BOLD));
+        
         paint.setTextAlign(Paint.Align.CENTER);
 
-        // Start large. If it doesn't fit, we shrink it.
-        float textSize = 65f;
+        // Start even larger now that we are condensed
+        float textSize = 80f;
         paint.setTextSize(textSize);
-        final float maxWidth = 96f;
+        
+        // We allow it to go up to 98% width (1px padding on sides)
+        final float maxWidth = 98f;
 
         while (paint.measureText(text) > maxWidth) {
             textSize -= 1f;
