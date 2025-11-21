@@ -13,9 +13,7 @@ import android.widget.Toast;
 
 public class LockTileService extends TileService {
 
-    // Variable to track the last time you clicked
     private long lastClickTime = 0;
-    // Required cooldown in milliseconds (prevent spam crashes)
     private static final long CLICK_COOLDOWN = 500; 
 
     @Override
@@ -25,11 +23,9 @@ public class LockTileService extends TileService {
 
         tile.setLabel("Lock Screen");
         
-        // Check if the service is ON or OFF
-        boolean isEnabled = TileAccessibilityService.isServiceEnabled(this);
-        
-        // If OFF, show as Inactive (greyed out)
-        tile.setState(isEnabled ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE);
+        // VISUALS: Always show as INACTIVE (Grey)
+        // This makes it look like a clickable button rather than a toggle switch
+        tile.setState(Tile.STATE_INACTIVE);
         
         tile.setIcon(Icon.createWithResource(this, R.drawable.ic_lock));
         tile.updateTile();
@@ -37,26 +33,25 @@ public class LockTileService extends TileService {
 
     @Override
     public void onClick() {
-        // 1. The Spam Filter: If clicked too fast, ignore it.
+        // Spam filter: prevent accidental double-taps
         if (SystemClock.elapsedRealtime() - lastClickTime < CLICK_COOLDOWN) {
             return;
         }
         lastClickTime = SystemClock.elapsedRealtime();
 
+        // Check permission and lock
         if (TileAccessibilityService.isServiceEnabled(this)) {
-            // It's ON: Lock the screen
             Intent intent = new Intent(this, TileAccessibilityService.class);
             intent.setAction(TileAccessibilityService.ACTION_LOCK_SCREEN);
             startService(intent);
         } else {
-            // It's OFF: Tell the user and open Settings
+            // Permission missing? Send to settings
             Toast.makeText(this, "Please enable 'Tile Toolkit' in Accessibility Settings", Toast.LENGTH_LONG).show();
             
             Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
             try {
-                // FIX: Android 14+ requires PendingIntent to open activities from tiles
                 if (Build.VERSION.SDK_INT >= 34) {
                     PendingIntent pendingIntent = PendingIntent.getActivity(
                         this, 
@@ -66,11 +61,9 @@ public class LockTileService extends TileService {
                     );
                     startActivityAndCollapse(pendingIntent);
                 } else {
-                    // Older Android versions
                     startActivityAndCollapse(intent);
                 }
             } catch (Exception e) {
-                // If something goes wrong opening settings, don't crash the app. Just log it.
                 Log.e("LockTileService", "Failed to launch settings", e);
                 Toast.makeText(this, "Could not open settings.", Toast.LENGTH_SHORT).show();
             }
