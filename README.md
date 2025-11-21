@@ -56,7 +56,7 @@ Add the Lock Screen tile.
 
 Tap it once.
 
-When prompted, enable "Tile Toolkit" in Accessibility Settings.
+When prompted, enable "QS Toolkit" in Accessibility Settings.
 
 Done. Tapping the tile now locks your screen without disabling fingerprint unlock.
 
@@ -69,7 +69,7 @@ adb shell pm grant com.cominatyou.batterytile android.permission.WRITE_SECURE_SE
 
 How to customize the Battery Tile
 
-Go to Settings > Apps > Tile Toolkit > Additional settings to:
+Go to Settings > Apps > QS Toolkit > Additional settings to:
 
 Select displayed stats (Voltage, Temperature, etc.).
 
