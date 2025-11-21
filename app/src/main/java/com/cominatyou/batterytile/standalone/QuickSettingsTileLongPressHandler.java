@@ -5,10 +5,9 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.service.quicksettings.TileService;
 import android.widget.Toast;
 
-// We only import the services that actually exist
+// Only importing the services we need to check against
 import com.cominatyou.batterytile.standalone.DnsTileService;
 import com.cominatyou.batterytile.standalone.LockTileService;
 import com.cominatyou.batterytile.standalone.QuickSettingsTileService;
@@ -20,7 +19,6 @@ public class QuickSettingsTileLongPressHandler extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Get the component name of the tile that triggered this activity
         ComponentName componentName = getIntent().getParcelableExtra(Intent.EXTRA_COMPONENT_NAME);
 
         if (componentName == null) {
@@ -50,7 +48,7 @@ public class QuickSettingsTileLongPressHandler extends Activity {
             targetIntent = new Intent("android.settings.NETWORK_AND_INTERNET_SETTINGS");
         }
 
-        // 4. Lock Screen Tile -> This App's Settings
+        // 4. Lock Screen Tile -> App Settings (Tile Toolkit)
         else if (className.equals(LockTileService.class.getName())) {
             launchAppSettings();
             finish();
@@ -61,14 +59,13 @@ public class QuickSettingsTileLongPressHandler extends Activity {
 
         if (targetIntent != null) {
             try {
-                // Try to launch the specific settings page
                 targetIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(targetIntent);
             } catch (Exception e) {
-                // ERROR HANDLER: If the specific page doesn't exist, fallback
+                // ERROR HANDLER
                 if (className.equals(DnsTileService.class.getName())) {
                     try {
-                        // Fallback for DNS: Wireless Settings (Universally available)
+                        // Fallback for DNS
                         Intent fallback = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
                         fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(fallback);
@@ -76,7 +73,7 @@ public class QuickSettingsTileLongPressHandler extends Activity {
                         Toast.makeText(this, "Could not find Network Settings", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    // Fallback for others: Main Settings
+                    // Fallback for others
                     try {
                         startActivity(new Intent(Settings.ACTION_SETTINGS));
                     } catch (Exception ex2) {
@@ -91,22 +88,21 @@ public class QuickSettingsTileLongPressHandler extends Activity {
         finish();
     }
 
-    // New Launch Method: Uses the Intent Action defined in Manifest
-    // This is safer than trying to import the class directly
+    // FIX: Explicitly point to the Preferences Activity by its full Java path.
+    // This bypasses import errors and package name confusion.
     private void launchAppSettings() {
         try {
-            Intent intent = new Intent("android.intent.action.APPLICATION_PREFERENCES");
-            intent.setPackage(getPackageName()); // Ensure it opens THIS app's settings
+            Intent intent = new Intent();
+            // This string MUST match the package declaration inside PreferencesActivity.java
+            String settingsActivity = "com.cominatyou.batterytile.preferences.PreferencesActivity";
+            
+            intent.setClassName(this, settingsActivity);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
         } catch (Exception e) {
-            // Absolute worst case: try to find it by package name
-            try {
-                Intent intent = getPackageManager().getLaunchIntentForPackage(getPackageName());
-                if (intent != null) startActivity(intent);
-            } catch (Exception ex) {
-                Toast.makeText(this, "Could not open App Settings", Toast.LENGTH_SHORT).show();
-            }
+            // If this fails, it means the file PreferencesActivity.java was moved or renamed.
+            Toast.makeText(this, "Error: Could not find PreferencesActivity", Toast.LENGTH_LONG).show();
+            e.printStackTrace();
         }
     }
 }
