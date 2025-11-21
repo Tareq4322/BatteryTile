@@ -48,6 +48,7 @@ public class QuickSettingsTileLongPressHandler extends Activity {
 
         // 3. DNS -> Network Settings
         else if (className.equals(DnsTileService.class.getName())) {
+            // Try specific Network page
             targetIntent = new Intent("android.settings.NETWORK_AND_INTERNET_SETTINGS");
         }
 
@@ -58,7 +59,7 @@ public class QuickSettingsTileLongPressHandler extends Activity {
             return;
         }
         
-        // 5. NEW: Internet Speed -> Data Usage Settings
+        // 5. Internet Speed -> Data Usage Settings
         else if (className.equals(InternetSpeedTileService.class.getName())) {
             targetIntent = new Intent(Settings.ACTION_DATA_USAGE_SETTINGS);
         }
@@ -70,10 +71,12 @@ public class QuickSettingsTileLongPressHandler extends Activity {
                 targetIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(targetIntent);
             } catch (Exception e) {
-                // Fallbacks for when specific pages are missing
-                if (className.equals(DnsTileService.class.getName()) || className.equals(InternetSpeedTileService.class.getName())) {
+                // Fallback logic
+                boolean isNetworkTile = className.equals(DnsTileService.class.getName()) || 
+                                      className.equals(InternetSpeedTileService.class.getName());
+                
+                if (isNetworkTile) {
                     try {
-                        // Wireless Settings is a safe bet for network stuff
                         Intent fallback = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
                         fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(fallback);
@@ -109,70 +112,6 @@ public class QuickSettingsTileLongPressHandler extends Activity {
             launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(launchIntent);
         } else {
-            try {
-                Intent appInfoIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                appInfoIntent.setData(android.net.Uri.parse("package:" + getPackageName()));
-                appInfoIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(appInfoIntent);
-            } catch (Exception e) {
-                Toast.makeText(this, "Error: Could not open App Settings", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-}
-        if (targetIntent != null) {
-            try {
-                targetIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(targetIntent);
-            } catch (Exception e) {
-                // DNS Fallback: Wireless Settings
-                if (className.equals(DnsTileService.class.getName())) {
-                    try {
-                        Intent fallback = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
-                        fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(fallback);
-                    } catch (Exception ex) {
-                        openAppSettings(); // Give up, show app settings
-                    }
-                } else {
-                    // General Fallback: Main Settings
-                    try {
-                        startActivity(new Intent(Settings.ACTION_SETTINGS));
-                    } catch (Exception ex2) {
-                        Toast.makeText(this, "Could not open settings", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-        } else {
-            openAppSettings();
-        }
-
-        finish();
-    }
-
-    /**
-     * THE FIX: Ask the system to find our own Settings Activity.
-     * This works regardless of package names or folder structures.
-     */
-    private void openAppSettings() {
-        // 1. Create an intent that asks for "The Preferences page for THIS app"
-        Intent intent = new Intent("android.intent.action.APPLICATION_PREFERENCES");
-        intent.setPackage(getPackageName()); // Restrict search to our own app
-        
-        // 2. Ask PackageManager if it can find a matching activity
-        PackageManager pm = getPackageManager();
-        List<ResolveInfo> activities = pm.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-
-        if (activities != null && !activities.isEmpty()) {
-            // 3. Found it! Grab the class name dynamically
-            ResolveInfo info = activities.get(0);
-            Intent launchIntent = new Intent();
-            launchIntent.setClassName(info.activityInfo.packageName, info.activityInfo.name);
-            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(launchIntent);
-        } else {
-            // 4. If that fails, try the "App Info" page (Uninstall/Permissions page)
-            // This GUARANTEED to exist on every Android phone.
             try {
                 Intent appInfoIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                 appInfoIntent.setData(android.net.Uri.parse("package:" + getPackageName()));
