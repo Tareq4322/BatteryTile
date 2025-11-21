@@ -29,10 +29,10 @@
             <meta-data android:name="android.service.quicksettings.TOGGLEABLE_TILE" android:value="true"/>
         </service>
 
-        <!-- NEW: Volume Tile Service -->
+        <!-- NEW: Volume Tile Service (Fixed Icon) -->
         <service android:name=".VolumeTileService"
             android:label="Volume"
-            android:icon="@drawable/ic_qs_battery"
+            android:icon="@drawable/ic_volume"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
