@@ -51,10 +51,21 @@
             </intent-filter>
         </service>
 
-        <!-- NEW: Private DNS Tile -->
+        <!-- Private DNS Tile -->
         <service android:name=".DnsTileService"
             android:label="Private DNS"
             android:icon="@drawable/ic_dns"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <!-- NEW: Download Speed Tile -->
+        <service android:name=".standalone.InternetSpeedTileService"
+            android:label="Download Speed"
+            android:icon="@drawable/ic_speed"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">
             <intent-filter>
