@@ -1,34 +1,47 @@
 package com.cominatyou.batterytile.standalone;
 
 import android.accessibilityservice.AccessibilityService;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.accessibility.AccessibilityEvent;
 
 public class TileAccessibilityService extends AccessibilityService {
 
-    public static final String ACTION_LOCK_SCREEN = "ACTION_LOCK_SCREEN";
+    // We hold a reference to the running service here.
+    private static TileAccessibilityService instance;
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null && ACTION_LOCK_SCREEN.equals(intent.getAction())) {
-            // This is the magic line that locks the phone
-            performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN);
+    public void onServiceConnected() {
+        super.onServiceConnected();
+        // When the system enables the service, we capture it.
+        instance = this;
+    }
+
+    @Override
+    public boolean onUnbind(android.content.Intent intent) {
+        // If the system kills it, we release the reference to avoid leaks.
+        instance = null;
+        return super.onUnbind(intent);
+    }
+
+    // This is the new, crash-proof way to lock
+    public static boolean requestLock() {
+        // If instance is null, the service is disabled or killed.
+        if (instance != null) {
+            return instance.performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN);
         }
-        return START_STICKY;
+        return false; // Failed to lock
     }
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        // We don't need to listen to events, just perform actions
+        // Not used
     }
 
     @Override
     public void onInterrupt() {
-        // Required method, but we don't need to do anything here
+        // Not used
     }
 
     // Helper to check if the user has actually enabled this service in Settings
