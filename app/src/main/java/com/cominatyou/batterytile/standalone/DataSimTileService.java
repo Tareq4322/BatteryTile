@@ -5,6 +5,7 @@ import android.graphics.drawable.Icon;
 import android.provider.Settings;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
+import android.widget.Toast; // New Import
 
 public class DataSimTileService extends TileService {
 
@@ -47,10 +48,31 @@ public class DataSimTileService extends TileService {
 
     @Override
     public void onClick() {
-        // Launch directly to the SIM / Mobile Network settings
-        // ACTION_NETWORK_OPERATOR_SETTINGS usually lands on the right page to switch SIM
         Intent intent = new Intent(Settings.ACTION_NETWORK_OPERATOR_SETTINGS);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivityAndCollapse(intent);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        
+        try {
+            // Attempt 1: Direct launch to SIM list (most specific)
+            startActivityAndCollapse(intent);
+        } catch (SecurityException e) {
+            // Attempt 2: Fallback to general Wireless Settings
+            Intent fallback = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
+            fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                startActivityAndCollapse(fallback);
+            } catch (Exception ex) {
+                // Last resort: Notify user of failure
+                Toast.makeText(this, "Error: Could not open settings shortcut.", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            // Handle general exceptions (e.g., Activity not found)
+            Intent fallback = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
+            fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                startActivityAndCollapse(fallback);
+            } catch (Exception ex) {
+                Toast.makeText(this, "Error: Could not open settings shortcut.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }
