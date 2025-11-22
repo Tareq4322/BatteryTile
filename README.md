@@ -30,7 +30,6 @@ Visual Feedback: Lights up briefly to confirm action.
 
 Instant Lock: Turns off your screen with a single tap.
 
-Fingerprint Friendly: Uses Accessibility Service to simulate a power button press, ensuring biometric unlock remains active.
 
 🛡️ Private DNS Tile
 
