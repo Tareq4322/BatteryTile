@@ -11,8 +11,6 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 
-import com.cominatyou.batterytile.standalone.R;
-
 public class KeepAwakeService extends Service {
 
     private PowerManager.WakeLock wakeLock;
@@ -29,7 +27,7 @@ public class KeepAwakeService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Notification notification = createNotification();
 
-        // FIX: Android 14 requires the type to be passed here explicitly
+        // Android 14 requires the type to be passed here explicitly
         if (Build.VERSION.SDK_INT >= 34) {
             startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         } else {
@@ -78,26 +76,6 @@ public class KeepAwakeService extends Service {
         }
         
         return builder.build();
-    }
-
-    private void createNotificationChannel() {
-        NotificationChannel channel = new NotificationChannel(
-                CHANNEL_ID,
-                "Caffeine Service",
-                NotificationManager.IMPORTANCE_LOW
-        );
-        NotificationManager manager = getSystemService(NotificationManager.class);
-        if (manager != null) {
-            manager.createNotificationChannel(channel);
-        }
-    }
-}    private Notification createNotification() {
-        return new Notification.Builder(this, CHANNEL_ID)
-                .setContentTitle("Caffeine is On")
-                .setContentText("Keeping your screen awake...")
-                .setSmallIcon(R.drawable.ic_coffee)
-                .setOngoing(true)
-                .build();
     }
 
     private void createNotificationChannel() {
