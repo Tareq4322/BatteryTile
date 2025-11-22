@@ -1,11 +1,13 @@
 package com.cominatyou.batterytile.standalone;
 
+import android.app.PendingIntent; // NEW IMPORT
 import android.content.Intent;
 import android.graphics.drawable.Icon;
+import android.os.Build; // NEW IMPORT
 import android.provider.Settings;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
-import android.widget.Toast; // New Import
+import android.widget.Toast;
 
 public class DataSimTileService extends TileService {
 
@@ -22,19 +24,16 @@ public class DataSimTileService extends TileService {
         tile.setIcon(Icon.createWithResource(this, R.drawable.ic_sim_dashboard));
 
         // Use the global setting value to READ the current data SIM
-        // NOTE: This setting is usually the index (e.g., 1 for SIM 1, 2 for SIM 2).
         try {
-            // Default to 1 if setting not found.
             int currentSub = Settings.Global.getInt(getContentResolver(), "multi_sim_data_call", 1);
             
             if (currentSub == 1) {
                 tile.setSubtitle("SIM 1 Active");
-                tile.setState(Tile.STATE_ACTIVE);
+                tile.setState(Tile.STATE_ACTIVE); 
             } else if (currentSub == 2) {
                 tile.setSubtitle("SIM 2 Active");
                 tile.setState(Tile.STATE_ACTIVE);
             } else {
-                // If it's 0 or something else, usually means no SIM selected or error
                 tile.setSubtitle("No SIM Data");
                 tile.setState(Tile.STATE_INACTIVE);
             }
@@ -48,31 +47,28 @@ public class DataSimTileService extends TileService {
 
     @Override
     public void onClick() {
-        Intent intent = new Intent(Settings.ACTION_NETWORK_OPERATOR_SETTINGS);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        
+        // Use the ACTION_WIRELESS_SETTINGS Intent, as it is more robust across devices
+        Intent intent = new Intent(Settings.ACTION_WIRELESS_SETTINGS); 
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
         try {
-            // Attempt 1: Direct launch to SIM list (most specific)
-            startActivityAndCollapse(intent);
-        } catch (SecurityException e) {
-            // Attempt 2: Fallback to general Wireless Settings
-            Intent fallback = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
-            fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            try {
-                startActivityAndCollapse(fallback);
-            } catch (Exception ex) {
-                // Last resort: Notify user of failure
-                Toast.makeText(this, "Error: Could not open settings shortcut.", Toast.LENGTH_SHORT).show();
+            // Check for modern Android APIs (API 34 / Android 14)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // API 34
+                PendingIntent pendingIntent = PendingIntent.getActivity(
+                    this, 
+                    0, 
+                    intent, 
+                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+                );
+                // Launch using the PendingIntent method (required for stability on 14+)
+                startActivityAndCollapse(pendingIntent); 
+            } else {
+                // For older Android versions, use the direct Intent method
+                startActivityAndCollapse(intent);
             }
         } catch (Exception e) {
-            // Handle general exceptions (e.g., Activity not found)
-            Intent fallback = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
-            fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            try {
-                startActivityAndCollapse(fallback);
-            } catch (Exception ex) {
-                Toast.makeText(this, "Error: Could not open settings shortcut.", Toast.LENGTH_SHORT).show();
-            }
+            // If both primary and fallback methods fail (highly unlikely now), show error
+            Toast.makeText(this, "Error: Could not launch network settings.", Toast.LENGTH_LONG).show();
         }
     }
 }
