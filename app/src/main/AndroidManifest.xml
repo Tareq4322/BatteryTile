@@ -20,7 +20,7 @@
         android:enableOnBackInvokedCallback="true"
         android:supportsRtl="true"
         android:theme="@style/Theme.BatteryTile"
-        tools:targetApi="tiramisu">
+        tools:targetApi="34">
 
         <!-- Original Battery Tile -->
         <service android:name=".QuickSettingsTileService"
@@ -78,68 +78,8 @@
             </intent-filter>
         </service>
 
-        <!-- FIX: Keep Awake Service with REQUIRED Property -->
-        <service android:name=".standalone.KeepAwakeService"
-            android:foregroundServiceType="specialUse"
-            android:exported="false">
-            <!-- This property is MANDATORY for Android 14+ specialUse services -->
-            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                      android:value="keeping_screen_on_for_user_convenience" />
-        </service>
-
-        <!-- Accessibility Service -->
-        <service android:name=".TileAccessibilityService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:label="@string/app_name"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
-        </service>
-
-        <activity android:name=".QuickSettingsTileLongPressHandler"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES"/>
-            </intent-filter>
-        </activity>
-
-        <activity android:name=".preferences.PreferencesActivity"
-            android:exported="true"
-            android:screenOrientation="sensorPortrait"
-            tools:ignore="LockedOrientationActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.APPLICATION_PREFERENCES"/>
-            </intent-filter>
-        </activity>
-
-        <activity android:name=".preferences.EditTileTextActivity"
-            android:exported="false"
-            android:screenOrientation="sensorPortrait"
-            tools:ignore="LockedOrientationActivity" />
-
-    </application>
-
-</manifest>                <action android:name="android.service.quicksettings.action.QS_TILE"/>
-            </intent-filter>
-        </service>
-
-        <!-- NEW: Caffeine Tile -->
-        <service android:name=".standalone.CaffeineTileService"
-            android:label="Caffeine"
-            android:icon="@drawable/ic_coffee"
-            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE"/>
-            </intent-filter>
-        </service>
-
-        <!-- NEW: Keep Awake Background Service -->
-        <!-- This service runs silently to hold the WakeLock so Android doesn't kill it -->
+        <!-- Keep Awake Background Service -->
+        <!-- Removed the <property> tag to fix build parsing errors -->
         <service android:name=".standalone.KeepAwakeService"
             android:foregroundServiceType="specialUse"
             android:exported="false" />
